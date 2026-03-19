@@ -1,6 +1,15 @@
+import { useEffect } from "react";
 import { Outlet } from "react-router-dom";
 
+import { useAuthStore } from "../store/useAuthStore";
+
 const MainLayout = () => {
+  const { checkAuth } = useAuthStore();
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
+
   return (
     <>
       <main className="min-h-screen bg-slate-900 text-white relative flex items-center justify-center p-4 overflow-hidden">

@@ -1,7 +1,11 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { Toaster } from 'react-hot-toast';
 
 import MainLayout from "../layouts/MainLayout";
 import { ChatPage, LoginPage, SignUpPage } from "../pages";
+
+import PublicRoute from "./PublicRoute";
+import ProtectedRoute from "./ProtectedRoute";
 
 const router = createBrowserRouter([
   {
@@ -10,15 +14,15 @@ const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <ChatPage />
+        element: <ProtectedRoute> <ChatPage /> </ProtectedRoute>
       },
       {
         path: 'login',
-        element: <LoginPage />
+        element: <PublicRoute> <LoginPage /> </PublicRoute>
       },
       {
         path: 'signup',
-        element: <SignUpPage />
+        element: <PublicRoute> <SignUpPage /> </PublicRoute>
       },
     ]
   }
@@ -26,7 +30,10 @@ const router = createBrowserRouter([
 
 const AppRouter = () => {
   return (
-    <RouterProvider router={router} />
+    <>
+      <RouterProvider router={router} />
+      <Toaster position='top-right' />
+    </>
   )
 }
 
