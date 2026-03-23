@@ -8,7 +8,7 @@ import type { TLoginSchema } from '../pages/LoginPage';
 
 export interface IUser {
   _id: string;
-  name: string;
+  fullName: string;
   email: string;
   profileImage?: string;
 }
@@ -18,10 +18,12 @@ interface IAuthState {
   isCheckingAuth: boolean;
   isSigningUp: boolean;
   isLoggedIn: boolean;
+  isUpdateProfile: boolean;
   checkAuth: () => Promise<void>;
   signup: (formData: TSignupSchema) => Promise<void>;
   login: (formData: TLoginSchema) => Promise<void>;
   logout: () => Promise<void>;
+  updateProfile: (data: FormData) => Promise<void>;
 }
 
 export const useAuthStore = create<IAuthState>((set) => ({
@@ -29,6 +31,7 @@ export const useAuthStore = create<IAuthState>((set) => ({
   isCheckingAuth: true,
   isSigningUp: false,
   isLoggedIn: false,
+  isUpdateProfile: false,
 
   checkAuth: async () => {
     try {
@@ -87,6 +90,23 @@ export const useAuthStore = create<IAuthState>((set) => ({
       } else {
         toast.error('Unexpected error occurred');
       }    
+    }
+  },
+
+  updateProfile: async (data) => {
+    set({ isUpdateProfile: true })
+    try {
+      const res = await axiosInstance.put('/auth/update-profile', data);
+      set({ authUser: res.data });
+      toast.success("Profile updated successfully");
+    } catch (error) {
+      if (isAxiosError(error)) {
+        toast.error(error.response?.data?.message || 'Update profile. Please try again.');
+      } else {
+        toast.error('Unexpected error occurred');
+      } 
+    } finally {
+      set({ isUpdateProfile: false })
     }
   }
 }));

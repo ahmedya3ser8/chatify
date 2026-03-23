@@ -6,7 +6,7 @@ import { axiosInstance } from "../lib/axios";
 
 export interface IUser {
   _id: string;
-  name: string;
+  fullName: string;
   email: string;
   profileImage?: string;
 }
@@ -21,8 +21,8 @@ export interface IMessage {
 
 interface IChatState {
   allContacts: IUser[];
-  chats: [];
-  messages: [];
+  chats: IUser[];
+  messages: IMessage[];
   activeTab: 'chats' | 'contacts';
   selectedUser: IUser | null;
   isUsersLoading: boolean;
@@ -84,6 +84,7 @@ export const useChatStore = create<IChatState>((set, get) => ({
     set({ isMessagesLoading: true })
     try {
       const res = await axiosInstance.get('/messages/chats');
+      console.log('res', res);
       set({ chats: res.data });
     } catch (error) {
       if (isAxiosError(error)) {
