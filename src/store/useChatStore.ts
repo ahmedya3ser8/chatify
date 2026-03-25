@@ -4,6 +4,7 @@ import { create } from "zustand";
 
 import { axiosInstance } from "../lib/axios";
 import { useAuthStore } from "./useAuthStore";
+import notificationAudio from '../assets/sounds/notification.mp3';
 
 export interface IUser {
   _id: string;
@@ -37,6 +38,8 @@ interface IChatState {
   getMyChatPartners: () => Promise<void>;
   getMessagesByUserId: (userId: string) => Promise<void>;
   sendMessage: (formData: FormData) => Promise<void>;
+  subscribeToMessages: () => void;
+  unsubscribeFromMessages: () => void;
 }
 
 const getInitialSound = (): boolean => {
@@ -141,5 +144,31 @@ export const useChatStore = create<IChatState>((set, get) => ({
         toast.error('Unexpected error occurred');
       }
     }
-  }
+  },
+
+  subscribeToMessages: () => {
+    const { selectedUser, isSoundEnabled } = get();
+    if (!selectedUser) return;
+
+    const socket = useAuthStore.getState().socket;
+
+    socket?.on('newMessage', (newMessage) => {
+      const isMessageSentFromSelectedUser = newMessage.senderId === selectedUser._id;
+      if (!isMessageSentFromSelectedUser) return;
+
+      const currentMessages = get().messages;
+      set({ messages: [...currentMessages, newMessage] });
+
+      if (isSoundEnabled) {
+        const notificationSound = new Audio(notificationAudio);
+        notificationSound.currentTime = 0;
+        notificationSound.play().catch((err) => console.log("Audio play failed:", err));
+      }
+    })
+  },
+
+  unsubscribeFromMessages: () => {
+    const socket = useAuthStore.getState().socket;
+    socket?.off("newMessage");
+  },
 }));

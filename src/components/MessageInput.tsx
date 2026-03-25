@@ -1,11 +1,12 @@
 import { useRef, useState } from "react";
-import useKeyboardSound from "../hooks/useKeyboardSound";
-import { useChatStore } from "../store/useChatStore";
 import toast from "react-hot-toast";
-import { ImageIcon, SendIcon, XIcon } from "lucide-react";
 import { useForm, type SubmitHandler } from "react-hook-form";
+import { ImageIcon, SendIcon, XIcon } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import z from "zod";
+
+import useKeyboardSound from "../hooks/useKeyboardSound";
+import { useChatStore } from "../store/useChatStore";
 
 const messageSchema = z.object({
   text: z.string().optional(),
