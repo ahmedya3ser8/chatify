@@ -7,8 +7,6 @@ import { axiosInstance } from '../lib/axios';
 import type { TSignupSchema } from '../pages/SignUpPage';
 import type { TLoginSchema } from '../pages/LoginPage';
 
-const BASE_URL = import.meta.env.VITE_API_URL;
-
 export interface IUser {
   _id: string;
   fullName: string;
@@ -127,7 +125,7 @@ export const useAuthStore = create<IAuthState>((set, get) => ({
     const { authUser } = get();
     if (!authUser || get().socket?.connected) return;
 
-    const socket = io(BASE_URL, { 
+    const socket = io('https://chatify-app-v1.up.railway.app', { 
       withCredentials: true // this ensures cookies are sent with the connection
     });
 
