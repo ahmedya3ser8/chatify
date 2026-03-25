@@ -1,6 +1,7 @@
 import { isAxiosError } from 'axios';
 import toast from 'react-hot-toast';
 import { create } from 'zustand';
+import { io, Socket } from 'socket.io-client';
 
 import { axiosInstance } from '../lib/axios';
 import type { TSignupSchema } from '../pages/SignUpPage';
@@ -19,24 +20,31 @@ interface IAuthState {
   isSigningUp: boolean;
   isLoggedIn: boolean;
   isUpdateProfile: boolean;
+  socket: Socket | null;
+  onlineUsers: string[],
   checkAuth: () => Promise<void>;
   signup: (formData: TSignupSchema) => Promise<void>;
   login: (formData: TLoginSchema) => Promise<void>;
   logout: () => Promise<void>;
   updateProfile: (data: FormData) => Promise<void>;
+  connectSocket: () => void;
+  disconnectSocket: () => void;
 }
 
-export const useAuthStore = create<IAuthState>((set) => ({
+export const useAuthStore = create<IAuthState>((set, get) => ({
   authUser: null,
   isCheckingAuth: true,
   isSigningUp: false,
   isLoggedIn: false,
   isUpdateProfile: false,
+  socket: null,
+  onlineUsers: [],
 
   checkAuth: async () => {
     try {
       const res = await axiosInstance.get<IUser>('/auth/check');
-      set({ authUser: res.data })
+      set({ authUser: res.data });
+      get().connectSocket();
     } catch (error) {
       console.log('Error in authCheck:', error);
       set({ authUser: null })
@@ -51,6 +59,7 @@ export const useAuthStore = create<IAuthState>((set) => ({
       const res = await axiosInstance.post('/auth/signup', formData);
       set({ authUser: res.data });
       toast.success('Account created successfully!');
+      get().connectSocket();
     } catch (error) {
       if (isAxiosError(error)) {
         toast.error(error.response?.data?.message || 'Signup failed. Please try again.');
@@ -68,6 +77,7 @@ export const useAuthStore = create<IAuthState>((set) => ({
       const res = await axiosInstance.post('/auth/login', formData);
       set({ authUser: res.data });
       toast.success('Logged in successfully!');
+      get().connectSocket();
     } catch (error) {
       if (isAxiosError(error)) {
         toast.error(error.response?.data?.message || 'Login failed. Please try again.');
@@ -84,6 +94,7 @@ export const useAuthStore = create<IAuthState>((set) => ({
       await axiosInstance.post('/auth/logout');
       set({ authUser: null });
       toast.success('Logged out successfully!');
+      get().disconnectSocket();
     } catch (error) {
       if (isAxiosError(error)) {
         toast.error(error.response?.data?.message || 'Logout failed. Please try again.');
@@ -108,5 +119,26 @@ export const useAuthStore = create<IAuthState>((set) => ({
     } finally {
       set({ isUpdateProfile: false })
     }
+  },
+
+  connectSocket: () => {
+    const { authUser } = get();
+    if (!authUser || get().socket?.connected) return;
+    
+    const socket = io('http://localhost:3000', { 
+      withCredentials: true // this ensures cookies are sent with the connection
+    });
+
+    socket.connect();
+    set({ socket });
+
+    // listen for online users event
+    socket.on('getOnlineUsers', (userIds) => {
+      set({ onlineUsers: userIds })
+    })
+  },
+
+  disconnectSocket: () => {
+    if (get().socket?.connected) get().socket?.disconnect();
   }
 }));
